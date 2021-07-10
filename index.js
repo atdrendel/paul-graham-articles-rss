@@ -1,3 +1,5 @@
+import { toIMF } from "https://deno.land/std@0.100.0/datetime/mod.ts";
+
 async function handleRequest(request) {
   if (request.method === "GET") {
     const text = await getArticlesText();
@@ -44,13 +46,14 @@ const parseArticles = (blogPosts) => {
 const makeRSS = (articles) => {
   let rss = rssStart();
   const count = articles.length;
+  const date = getDate();
   for (let i = 0; i < count; i++) {
     const article = articles[i];
     rss += `
 	<item>
 		<link>${article.url}</link>
 		<title>${article.title}</title>
-		<pubDate>${pubDate(i, count)}</pubDate>
+		<pubDate>${pubDate(i, count, date)}</pubDate>
 	</item>`;
   }
   rss += rssEnd();
@@ -71,7 +74,12 @@ const rssEnd = () => {
 	`;
 };
 
-const pubDate = (index, count) => {
+const getDate = () => {
+  const now = toIMF(new Date());
+  return now.slice(0, 16);
+};
+
+const pubDate = (index, count, date) => {
   let offset = Math.max(0, count - index - 1);
 
   const hour = ((offset / 3600) > 0) ? Math.floor(offset / 3600) : 0;
@@ -85,7 +93,7 @@ const pubDate = (index, count) => {
   const second = offset;
   const secondStr = second.toString().padStart(2, "0");
 
-  return `Sat, 10 Jul 2021 ${hourStr}:${minuteStr}:${secondStr} GMT`;
+  return `${date} ${hourStr}:${minuteStr}:${secondStr} GMT`;
 };
 
 const success = (rss) => {
