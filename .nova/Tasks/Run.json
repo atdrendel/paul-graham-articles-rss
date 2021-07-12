@@ -1,0 +1,10 @@
+{
+  "actions" : {
+    "run" : {
+      "enabled" : true,
+      "script" : "deployctl run --watch .\/index.js"
+    }
+  },
+  "identifier" : "4F21E514-66D9-48AA-9869-E945EE6EB2BD",
+  "openLogOnRun" : "start"
+}

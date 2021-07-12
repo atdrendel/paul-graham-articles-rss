@@ -1,0 +1,9 @@
+{
+  "actions" : {
+    "build" : {
+      "enabled" : true,
+      "script" : "deployctl check .\/index.js"
+    }
+  },
+  "identifier" : "C5D22E36-30BB-442C-A1EF-94694CE4D599"
+}
