@@ -1,4 +1,5 @@
 import { toIMF } from "https://deno.land/std@0.100.0/datetime/mod.ts";
+import { createHash } from "https://deno.land/std@0.100.0/hash/mod.ts";
 
 async function handleRequest(request) {
   if (request.method === "GET") {
@@ -49,11 +50,14 @@ const makeRSS = (articles) => {
   const date = getDate();
   for (let i = 0; i < count; i++) {
     const article = articles[i];
+    const hash = createHash("md5")
+    hash.update(article.url)
     rss += `
 	<item>
 		<link>${article.url}</link>
 		<title>${article.title}</title>
 		<pubDate>${pubDate(i, count, date)}</pubDate>
+    <guid>${hash.toString("hex")}</guid>
 	</item>`;
   }
   rss += rssEnd();
@@ -62,7 +66,8 @@ const makeRSS = (articles) => {
 
 const rssStart = () => {
   return `
-<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel>
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel>
 	<title>Paul Graham: Essays</title>
 	<link>http://www.paulgraham.com/</link>
 	<description>Unauthorized scraped RSS feed</description>`;
