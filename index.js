@@ -54,10 +54,10 @@ const makeRSS = (articles) => {
     hash.update(article.url)
     rss += `
 	<item>
-		<link>${article.url}</link>
-		<title>${article.title}</title>
+		<link>${escapeText(article.url)}</link>
+		<title>${escapeText(article.title)}</title>
 		<pubDate>${pubDate(i, count, date)}</pubDate>
-    <guid>${hash.toString("hex")}</guid>
+    <guid isPermaLink="false">${hash.toString("hex")}</guid>
 	</item>`;
   }
   rss += rssEnd();
@@ -101,9 +101,18 @@ const pubDate = (index, count, date) => {
   return `${date} ${hourStr}:${minuteStr}:${secondStr} GMT`;
 };
 
+const escapeText = (text) => {
+  return text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll("'", "&apos;")
+    .replaceAll('"', "&quot;")
+}
+
 const success = (rss) => {
   return new Response(
-    rss,
+    rss.trimStart(),
     { headers: { "content-type": "application/rss+xml; charset=UTF-8" } },
   );
 };
