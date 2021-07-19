@@ -1,5 +1,4 @@
 import { toIMF } from "https://deno.land/std@0.100.0/datetime/mod.ts";
-import { createHash } from "https://deno.land/std@0.100.0/hash/mod.ts";
 
 async function handleRequest(request) {
   if (request.method === "GET") {
@@ -50,14 +49,14 @@ const makeRSS = (articles) => {
   const date = getDate();
   for (let i = 0; i < count; i++) {
     const article = articles[i];
-    const hash = createHash("md5")
-    hash.update(article.url)
+    const cleanURL = stripTrailingAmpersand(article.url);
+    const link = escapeText(cleanURL);
     rss += `
 	<item>
-		<link>${escapeText(article.url)}</link>
+		<link>${link}</link>
 		<title>${escapeText(article.title)}</title>
 		<pubDate>${pubDate(i, count, date)}</pubDate>
-    <guid isPermaLink="false">${hash.toString("hex")}</guid>
+		<guid>${link}</guid>
 	</item>`;
   }
   rss += rssEnd();
@@ -87,18 +86,26 @@ const getDate = () => {
 const pubDate = (index, count, date) => {
   let offset = Math.max(0, count - index - 1);
 
-  const hour = ((offset / 3600) > 0) ? Math.floor(offset / 3600) : 0;
+  const hour = offset / 3600 > 0 ? Math.floor(offset / 3600) : 0;
   const hourStr = hour.toString().padStart(2, "0");
 
-  offset = offset - (hour * 3600);
-  const minute = ((offset / 60) > 0) ? Math.floor(offset / 60) : 0;
+  offset = offset - hour * 3600;
+  const minute = offset / 60 > 0 ? Math.floor(offset / 60) : 0;
   const minuteStr = minute.toString().padStart(2, "0");
 
-  offset = offset - (minute * 60);
+  offset = offset - minute * 60;
   const second = offset;
   const secondStr = second.toString().padStart(2, "0");
 
   return `${date} ${hourStr}:${minuteStr}:${secondStr} GMT`;
+};
+
+const stripTrailingAmpersand = (text) => {
+  if (text.endsWith("&")) {
+    return text.substring(0, text.length - 1);
+  } else {
+    return text;
+  }
 };
 
 const escapeText = (text) => {
@@ -107,24 +114,20 @@ const escapeText = (text) => {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll("'", "&apos;")
-    .replaceAll('"', "&quot;")
-}
+    .replaceAll('"', "&quot;");
+};
 
 const success = (rss) => {
-  return new Response(
-    rss.trimStart(),
-    { headers: { "content-type": "application/rss+xml; charset=UTF-8" } },
-  );
+  return new Response(rss.trimStart(), {
+    headers: { "content-type": "application/rss+xml; charset=UTF-8" },
+  });
 };
 
 const badRequest = () => {
-  return new Response(
-    JSON.stringify({ error: "BAD REQUEST" }),
-    {
-      status: 400,
-      headers: { "content-type": "application/json; charset=UTF-8" },
-    },
-  );
+  return new Response(JSON.stringify({ error: "BAD REQUEST" }), {
+    status: 400,
+    headers: { "content-type": "application/json; charset=UTF-8" },
+  });
 };
 
 addEventListener("fetch", (event) => {
