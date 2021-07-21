@@ -36,7 +36,7 @@ const parseArticles = (blogPosts) => {
       const url = new URL(urlText, baseURL);
       const title = e.slice(urlEnd + 2, titleEnd);
       if (url && url.toString() && title && title.length > 0) {
-        parsedArticles.push({ url: url.toString(), title: title });
+        parsedArticles.push({ url: url.toString().trim(), title: title });
       }
     }
   });
@@ -49,7 +49,7 @@ const makeRSS = (articles) => {
   const date = getDate();
   for (let i = 0; i < count; i++) {
     const article = articles[i];
-    const cleanURL = stripTrailingAmpersand(article.url);
+    const cleanURL = replaceBrokenURLIfNeeded(article.url);
     const link = escapeText(cleanURL);
     rss += `
 	<item>
@@ -100,12 +100,19 @@ const pubDate = (index, count, date) => {
   return `${date} ${hourStr}:${minuteStr}:${secondStr} GMT`;
 };
 
-const stripTrailingAmpersand = (text) => {
-  if (text.endsWith("&")) {
-    return text.substring(0, text.length - 1);
-  } else {
-    return text;
+const replaceBrokenURLIfNeeded = (text) => {
+  const brokenURLs = Array.from([
+    "https://sep.yimg.com/ty/cdn/paulgraham/acl1.txt",
+    "https://sep.yimg.com/ty/cdn/paulgraham/acl2.txt",
+  ]);
+
+  for (let i = 0; i < brokenURLs.length; i++) {
+    if (text.startsWith(brokenURLs[i])) {
+      return brokenURLs[i];
+    }
   }
+
+  return text;
 };
 
 const escapeText = (text) => {
